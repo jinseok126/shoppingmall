@@ -172,6 +172,130 @@ $(document).ready(function(){
          }
       }); // click
       
+      // 1개 씩 삭제하는 버튼
+      $("input[id^=deleteBtn_]").click(function(e){
+    	  // alert("test");
+    	  
+    	  // id로 구분하는 번호
+    	  var num = e.target.id.split("_")[1];
+    	  var cartNum = $("#cartNum_"+num+"").val();
+    	  
+    	  if(confirm("정말로 삭제하시겠습니까?") == true){
+    		  // alert("zz");
+    		  
+    		  $.ajax({
+    			  url : "${pageContext.request.contextPath}/cart/delete.do",
+    			  type : 'get',
+    			  
+    			  data : {
+    				  cartNum : cartNum 
+    			  },
+    			  
+    			  success : function(data){
+    				  alert("제품을 삭제하였습니다.");
+    				  
+    				  // json으로 삭제 후 남은 카트 개수를 받아 menu의 cart 개수를 바꿔준다. 
+    				  $("#cartSpan").html(data);
+    				  
+    				  console.log($("#afterPriceDiv_"+num+"").html());
+    				  totalPrice = totalPrice - intChange($("#afterPriceDiv_"+num+""));
+    				  // alert("totalPrice = "+totalPrice);
+    				  $("#totalPriceTd").html(addComma(totalPrice)+"원"); // 총 상품 가격 바꾸기
+    				  $("#cartTr_"+num+"").remove(); // 테이블 목록에 있는 카트 삭제
+    				  
+    				  // 상품이 존재하지 않을경우 테이블을 숨김
+   	           		  if(data == 0) {
+   	           			  
+   	           			  $("table").hide();
+		   	              $("#noCartItem").append("<div style='display : flex; align-items:center;"+
+		                    					  "justify-content : center;'>상품이 존재하지 않습니다!</div>");
+   	           		  } // if
+   	           		  
+    			  },// success
+    			  
+    			  error : function(xhr, status){
+    				  alert("error");
+    			  }
+    		  }); // ajax
+    		  
+    	  } // if
+      }); // click
+      
+      // 선택삭제 버튼
+      $("#selectDeleteBtn").on("click", function(){
+	  	  
+		  // alert("test!!");
+		  
+    	  var cartNum = new Array();	// 카트 번호를 담기위한 배열
+    	  var rowCnt = 0;
+    	  var indexNum = new Array();	// 선택된 인덱스 번호(num)를 저장하는 배열 
+    	  
+    	  // alert($("input:checkbox[name=select_box]:checked").length); // 선택된 개수
+    	  
+    	  // 선택된 상품이 없을경우 발생하는 조건문
+    	  if($("input:checkbox[name=select_box]:checked").length == 0) {
+    		  alert("선택하신 상품이 존재하지 않습니다!");
+    		  
+		  // 선택한 상품이 존재할 경우 선택된 상품 서버로 보내기		  
+    	  } else{
+    		  
+    		  // 선택된 상품의 cartNum을 배열에 담는 함수
+    		  $("input:checkbox[name=select_box]:checked").each(function(e){
+	
+    			  var num = this.id.split("_")[1];
+    			  
+    			  cartNum[rowCnt] = $("#cartNum_"+num+"").val();
+    			  indexNum[rowCnt] = num;
+    			  rowCnt++;
+    		  }); // each
+    		  
+    		  // ajax 전송을  배열로 보내기 위한 setting
+    		  $.ajaxSettings.traditional = true;
+    		  
+    		  $.ajax({
+    			  
+    			  url : "${pageContext.request.contextPath}/cart/delete.do",
+    			  type : 'post',
+    			  
+    			  data : {
+  	           		cartNum : cartNum 
+  	           	  },
+  	           	  
+  	           	  success : function(data){
+  	           		  
+  	           		  // 체크된 상품을 테이블에서 제거
+  	           		  for(var i=0; i<rowCnt; i++){
+  	           			  $("#cartTr_"+indexNum[i]+"").remove();
+  	           		  }
+  	           		  $("#cartSpan").html(data); // 삭제 후 cart 개수를 json peed 받아 menu의 개수를 바꿔줌
+  	           		  
+  	           		  totalPrice = 0;
+  	           		  $("#totalPriceTd").html("0원"); // 선택된 상품을 모두 삭제하였으므로 선택된 상품의 가격을 0원으로 초기화
+  	           		  
+  	           		  // 상품이 존재하지 않을경우 테이블을 숨김
+   	           		  if(data == 0) {
+   	           			  
+   	           			  $("table").hide();
+		   	              $("#noCartItem").append("<div style='display : flex; align-items:center;"+
+		                    					  "justify-content : center;'>상품이 존재하지 않습니다!</div>"
+		                  );
+   	           			  
+   	           		  } // if
+  	           		  
+  	           	  }, // success
+  	           	  
+  	           	  error : function(xhr, status){
+  	           		  alert("error");
+  	           	  }
+    			  
+    		  }); // ajax
+    		  
+    		
+    		  
+    	  } // else 
+    	  
+	  }); // 선택삭제 click end
+      
    } // else
    
 }); // end
